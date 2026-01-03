@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serpiente</title>
+</head>
+
+<body>
+    <canvas id="canv" width="400" height="400"></canvas>
+    <script>
+        posX=posY=10; //posición de la serpiente en celdas
+        tamCel=20; //tamaño de cada recuadro
+        canCel=20; //cantidad de celdas en el fondo tamCel*canCel=400
+        xPre=yPre=15; //posición del premio
+        velX=velY=0; //velocidad serpiente
+        serp=[]; //posición de todos los elementos de la serpiente
+        longS=5; //longitud de la serpiente
+        window.onload = function(){
+            fondo=window.canv;
+            ctx=fondo.getContext("2d")
+            document.addEventListener("keydown",teclas)
+            setInterval(jugar,1000/15); //15 veces por segundo
+        }
+        function teclas(tecla){
+            switch(tecla.keyCode){
+                case 37: //izquerda
+                    velX=-1;velY=0; break;
+                case 38: //arriba
+                    velX=0;velY=-1; break;
+                case 39: //derecha
+                    velX=1;velY=0; break;
+                case 40: //abajo
+                    velX=0;velY=1; break;
+            }
+        }
+        function jugar(){
+            ctx.fillStyle="black"; //pinta el fondo
+            ctx.fillRect(0,0,fondo.width, fondo.height);
+            posX+=velX; posY+=velY; //mueve la serpiente
+            if (posX<0) posX=canCel-1; //si se va por la izq
+            if (posX>canCel-1) posX=0; //si se va por la der
+            if (posY<0) posY=canCel-1; //se va por arriba
+            if (posY>canCel-1) posY=0; //se va por arriba
+            ctx.fillStyle="lime"; //pinta la serpiente
+            for (seg of serp){ //saca cada segmento
+                ctx.fillRect(seg.x*tamCel,seg.y*tamCel,tamCel-2,tamCel-2);  //pinta el segmento  
+                if (seg.x==posX && seg.y==posY) //Detectar si la serpiente se toca a si misma
+                    longS=5;
+            }
+            serp.push({x:posX, y:posY}) //añade el nuevo segmento
+            while (serp.length>longS) //quita el último segmento
+                serp.shift();
+//            ctx.fillRect(posX*tamCel,posY*tamCel,tamCel-2,tamCel-2);
+            ctx.fillStyle="red";
+            ctx.fillRect(xPre*tamCel,yPre*tamCel,tamCel-2,tamCel-2);
+            if (xPre==posX && yPre==posY){ //Si la serpiente está en el premio
+                longS++; //aumenta la longitud de la serpiente
+                xPre=Math.floor(Math.random()*canCel); //genera la posición del nuevo premio
+                yPre=Math.floor(Math.random()*canCel);
+            }
+        }
+    </script>
+</body>
+</html>
