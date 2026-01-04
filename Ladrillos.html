@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ladrillos</title>
+</head>
+
+<body>
+    <canvas id="canv" width="800" height="600"></canvas>
+    <script>
+
+        fondo = window.canv;
+        ctx = fondo.getContext("2d");
+
+        bolaX = bolaY = 400;
+        velX = 1;
+        velY = 3;
+
+        ANCHO_PALA = 100;
+        ALTO_PALA = 10;
+        palaX = 400;
+
+        ANCHO_LADR = 100;
+        ALTO_LADR = 50;
+        COLS_LADR = 8;
+        FILS_LADR = 3;
+
+        ladrillos = [];
+//Cuadricula todo en ladrillos, pero solo hace visible los deseados
+        for (i = 0; i < fondo.width/ANCHO_LADR; i++) {
+            ladrillos[i]=[];
+            for (j = 0; j < fondo.height/ALTO_LADR; j++) {
+                if(i<COLS_LADR && j < FILS_LADR)
+                    ladrillos[i][j] = { x: i * ANCHO_LADR, y: j * ALTO_LADR, visible: true }
+                else
+                    ladrillos[i][j] = { x: i * ANCHO_LADR, y: j * ALTO_LADR, visible: false }
+            }
+        }
+        setInterval(juego, 100 / 30);
+        fondo.addEventListener("mousemove", moverPala);
+        teclaDer=teclaIzq=false
+        document.addEventListener("keydown",pulsa);
+        document.addEventListener("keyup",suelta);
+
+        function pulsa(tecla){
+            if (tecla.keyCode==37) teclaIzq=true;
+            if (tecla.keyCode==39) teclaDer=true;
+        }
+        function suelta(tecla){
+            if (tecla.keyCode==37) teclaIzq=false;
+            if (tecla.keyCode==39) teclaDer=false;
+        }
+
+
+        function moverPala(evt) {
+            palaX = evt.clientX - ANCHO_PALA / 2;
+        }
+        function juego() {
+            mover();
+            pintar();
+        }
+        function mover() {
+            //movimiento de la bola
+            bolaX += velX;
+            bolaY += velY;
+            //rebote de la bola con la pared
+            if (bolaX > fondo.width || bolaX < 0) velX *= -1
+            if (bolaY > fondo.height) bolaY = bolaX = 400; //toca el suelo
+            if (bolaY < 0) velY *= -1;
+            //rebote de la bola con la pala
+            if (bolaY > fondo.height - ALTO_PALA &&
+                bolaX > palaX &&
+                bolaX < palaX + ANCHO_PALA){
+                    velY *= -1;
+                    //modifica la velocidad X dependiendo de la distacia al centro de la pala
+                    centro=palaX+(ANCHO_PALA/2);
+                    distAlCentro=bolaX-centro;
+                    velX = distAlCentro * 0.05;
+                }
+            //rebote de la bola con ladrillos
+            if (bolaX<fondo.width&&bolaX>0&&bolaY<fondo.height&&bolaY>0){
+                indXlad=Math.floor(bolaX/ANCHO_LADR);
+                indYlad=Math.floor(bolaY/ALTO_LADR);
+                if (ladrillos[indXlad][indYlad].visible){
+                    ladrillos[indXlad][indYlad].visible=false
+                    velY*=-1;
+                    }
+            }
+        }
+        function pintar() {
+            ctx.fillStyle = "black"; //pinta el fondo
+            ctx.fillRect(0, 0, fondo.width, fondo.height);
+
+            ctx.fillStyle = "lime";//pinta la pala
+            if (teclaDer) palaX=Math.min(fondo.width-ANCHO_PALA,palaX+5);
+            if (teclaIzq) palaX= Math.max(0,palaX-5);
+            ctx.fillRect(palaX, fondo.height - ALTO_PALA, ANCHO_PALA, ALTO_PALA);
+
+            ctx.fillStyle = "red"//pinta la bola
+            ctx.beginPath();
+            ctx.arc(bolaX, bolaY, 10, 0, Math.PI * 2, true);
+            ctx.fill();
+
+            ctx.fillStyle = "blue";//pinta los ladrillos
+            for (filLad of ladrillos){
+                for (lad of filLad){
+                    if (lad.visible)
+                        ctx.fillRect(lad.x,lad.y, ANCHO_LADR - 2, ALTO_LADR - 2);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
