@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroides</title>
+</head>
+
+<body>
+    <canvas id="fondo" width="600" height="600"></canvas>
+    <script>
+        let intervaloJuego;
+
+        window.onload = function () {
+            canvas = document.getElementById("fondo");
+            ctx = canvas.getContext("2d");
+            imgFondo = new Image()
+            imgFondo.src = "images/space.png"
+
+            nave = new Nave(ctx);
+            ctlDisparo = new CtlDisparo(ctx);
+            ctlAsteroide = new CtlAsteroide(ctx);
+
+            intervaloJuego = setInterval(juego, 1000 / 60);
+        }
+        function juego() {
+            ctx.drawImage(imgFondo, 0, 0, canvas.width, canvas.height);
+            ctlDisparo.mostrar();
+            ctlAsteroide.mostrar();
+            nave.mostrar(ctx);
+            colisionador(ctlDisparo, ctlAsteroide, nave);
+        }
+
+        function colisionador(ctlDisparo, ctlAsteroide, nave) {
+            //Destrucción de asteroides por disparo
+            for (ast of ctlAsteroide.asteroides)
+                for (dis of ctlDisparo.disparos)
+                        if (dis.x + dis.width > ast.x && dis.x < ast.x + ast.width &&
+                            dis.y + dis.height > ast.y && dis.y < ast.y + ast.height) {
+                            ctlAsteroide.asteroides.splice(ctlAsteroide.asteroides.indexOf(ast), 1);
+                            ctlDisparo.disparos.splice(ctlDisparo.disparos.indexOf(dis), 1);
+                            this.sonido = new Audio("sounds/destroy.wav");
+                            this.sonido.currentTime = 0;
+                            this.sonido.play();
+                        }
+            //Choche entre asteroides
+            for (ene of ctlAsteroide.asteroides)
+                for (ene1 of ctlAsteroide.asteroides)
+                    if (ene1.velY != ene.velY)
+                        if (ene1.x + ene1.width > ene.x && ene1.x < ene.x + ene.width &&
+                            ene1.y + ene1.height > ene.y && ene1.y < ene.y + ene.height) {
+                            ctlAsteroide.asteroides.splice(ctlAsteroide.asteroides.indexOf(ene), 1);
+                            ctlAsteroide.asteroides.splice(ctlAsteroide.asteroides.indexOf(ene1), 1);
+                            this.sonido = new Audio("sounds/destroy.wav");
+                            this.sonido.currentTime = 0;
+                            this.sonido.play();
+                        }
+            //Destrucción de nave
+            for (ene of ctlAsteroide.asteroides)
+                if (ene.x + ene.width > nave.x && ene.x < nave.x + nave.width &&
+                    ene.y + ene.height > nave.y && ene.y < nave.y + nave.height) {
+                    ctlAsteroide.asteroides.splice(ctlAsteroide.asteroides.indexOf(ene), 1);
+                    this.sonido = new Audio("sounds/explosion.mp3");
+                    this.sonido.currentTime = 0;
+                    this.sonido.play();
+                    nave.imagen.src = "";
+                    setTimeout(fin, 1000);
+                }
+        }
+        function fin(){
+                    // Parar el juego
+                    clearInterval(intervaloJuego);
+                    clearInterval(ctlAsteroide.intervaloCreacion);
+                    
+                    // Mostrar FIN
+                    ctx.fillStyle = "white";
+                    ctx.font = "60px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("FIN DE JUEGO", canvas.width/2, canvas.height/2);
+        }
+        class Nave {
+            izq = false;
+            der = false;
+            dis = false;
+            constructor(ctx) {
+                this.x = canvas.width / 2;
+                this.y = canvas.height - 75;
+                this.width = 50;
+                this.height = 48;
+                this.vel = 5;
+                this.imagen = new Image();
+                this.imagen.src = "images/player.png"
+                this.ctx = ctx
+
+                document.addEventListener("keydown", (e) => {
+                    if (e.code == "ArrowRight") this.der = true;
+                    if (e.code == "ArrowLeft") this.izq = true;
+                    if (e.code == "Space") ctlDisparo.disparar(this.x + this.width / 2, this.y, 5, "red");
+                })
+                document.addEventListener("keyup", (e) => {
+                    if (e.code == "ArrowRight") this.der = false;
+                    if (e.code == "ArrowLeft") this.izq = false;
+                })
+            }
+            mover() {
+                if (this.izq) this.x = Math.max(this.x -= this.vel, 0);
+                if (this.der) this.x = Math.min(this.x += this.vel, canvas.width - this.width);
+            }
+            mostrar(ctx) {
+                this.mover();
+                ctx.drawImage(this.imagen, this.x, this.y, this.width, this.height)
+            }
+        }
+
+        class CtlAsteroide {
+            asteroides = [];
+            constructor(ctx) {
+                this.ctx = ctx;
+                this.intervaloCreacion = setInterval(() => this.creaAsteroide(), 500);
+            }
+            creaAsteroide() {
+                let aX = Math.floor(Math.random() * (canvas.width - 44))
+                let aVy = - (Math.random() * 10)
+                let aVx = Math.random() * 4 - 2;
+                let asteroide = new Asteroide(aX, 0, aVx, aVy)
+                this.asteroides.push(asteroide)
+            }
+            mostrar(ctx) {
+                for (let i = this.asteroides.length - 1; i >= 0; i--) {
+                    let ast = this.asteroides[i];
+                    ast.x += ast.velX;
+                    ast.y -= ast.velY;
+                    if (ast.y > canvas.height) {
+                        this.asteroides.splice(i, 1);
+                    }
+                    else {
+                        this.ctx.drawImage(ast.imagen, ast.x, ast.y, ast.width, ast.height)
+                    }
+                }
+            }
+        }
+        class Asteroide {
+            constructor(x, y, velX, velY) {
+                this.x = x;
+                this.y = y;
+                this.width = 44;
+                this.height = 32;
+                this.velX = velX;
+                this.velY = velY;
+                this.imagen = new Image();
+                this.imagen.src = `images/asteroid${Math.floor(Math.random() * 2) + 1}.png`
+            }
+        }
+
+
+        class CtlDisparo {
+            disparos = [];
+            constructor(ctx) {
+                this.ctx = ctx;
+                this.sonido = new Audio("sounds/shoot.wav");
+            }
+            disparar(x, y, vel, color) {
+                let disparo = new Disparo(x, y, vel, color)
+                if (this.disparos.length < 10) {
+                    this.sonido.currentTime = 0;
+                    this.sonido.play();
+                    this.disparos.push(disparo);
+                }
+            }
+            mostrar() {
+                for (let i = this.disparos.length - 1; i >= 0; i--) {
+                    let dis = this.disparos[i];
+                    dis.y -= dis.vel;
+                    if (dis.y < 0) {
+                        this.disparos.splice(i, 1);
+                    }
+                    else {
+                        this.ctx.fillStyle = dis.color;
+                        this.ctx.fillRect(dis.x, dis.y, dis.width, dis.height);
+                    }
+                }
+            }
+        }
+        class Disparo {
+            constructor(x, y, vel, color) {
+                this.x = x;
+                this.y = y;
+                this.width = 5;
+                this.height = 20;
+                this.vel = vel;
+                this.color = color;
+            }
+        }
+
+    </script>
+</body>
+
+</html>
