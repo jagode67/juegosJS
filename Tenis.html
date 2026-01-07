@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenis</title>
+</head>
+<body>
+    <canvas id="fondo" width="800" height="600"></canvas>
+    <script>
+        var bolaX = 50;
+        var bolaY = 20;
+        var velX = 10;
+        var velY = 4;
+
+        var pala1Y = 250;
+        var pala2Y = 250;
+        const PALA_ANCHO = 10;
+        const PALA_ALTO = 100;
+
+        window.onload = function () {
+            fondo = document.getElementById("fondo");
+            ctx = fondo.getContext("2d");
+            setInterval(juego, 1000 / 30);
+            //fondo.addEventListener('mousedown', clickRaton)
+            fondo.addEventListener('mousemove',
+                function (evt) {
+                    var rect = fondo.getBoundingClientRect();
+                    var root = document.documentElement;
+                    pala1Y = Math.min(evt.clientY - rect.top - root.scrollTop, fondo.height - PALA_ALTO);
+                })
+
+        }
+        function juego() {
+            mover();
+            mostrar();
+        }
+        function mover() {
+            bolaX += velX;
+            bolaY += velY;
+            //mueve pala bot
+            //Si la bola está por encima del centro de la pala
+            if (bolaY<pala2Y+PALA_ALTO/2) pala2Y-=6;
+            //Si la bola está por debajo del centro de la pala
+            if (bolaY>pala2Y+PALA_ALTO/2) pala2Y+=6;
+
+            //Si chocha en la pared del jugador
+            if (bolaX < 0) {
+                if (bolaY > pala1Y && bolaY < pala1Y + PALA_ALTO) {
+                    velX *= -1;
+                    sepCentro = bolaY - (pala1Y + PALA_ALTO / 2);
+                    velY = sepCentro * 0.3;
+                } else {
+                    bolaY = fondo.height / 2;
+                    bolaX = fondo.width / 2;
+                    velY=4; velX=10;
+                    console.log("punto bot")
+                }
+            }
+            //Si chocha en la pared del bot
+            if (bolaX > fondo.width) {
+                if (bolaY > pala2Y && bolaY < pala2Y + PALA_ALTO) {
+                    velX *= -1;
+                    sepCentro = bolaY - (pala2Y + PALA_ALTO / 2);
+                    velY = sepCentro * 0.3;
+                } else {
+                    bolaY = fondo.height / 2;
+                    bolaX = fondo.width / 2;
+                    velY=4; velX=10;
+                    console.log("punto jugador")
+                }
+            }
+            if (bolaY < 0 || bolaY > fondo.height) velY *= -1;
+        }
+        function mostrar() {
+            //campo
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, fondo.width, fondo.height);
+            //red
+            for (i = 0; i < fondo.height; i += 40) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(fondo.width / 2 - 1, i, 2, 20);
+            }
+            //pala jugador 
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, pala1Y, PALA_ANCHO, PALA_ALTO);
+
+            //pala  bot
+            ctx.fillStyle = 'white';
+            ctx.fillRect(fondo.width - PALA_ANCHO, pala2Y, PALA_ANCHO, PALA_ALTO);
+
+            //bola
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(bolaX, bolaY, 10, 0, Math.PI * 2, true);
+            ctx.fill();
+        }
+    </script>
+</body>
+</html>
