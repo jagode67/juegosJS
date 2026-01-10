@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serpiente</title>
+    <title>Snake</title>
 </head>
 
 <body>
@@ -17,11 +17,14 @@
         velX=velY=0; //velocidad serpiente
         serp=[]; //posición de todos los elementos de la serpiente
         longS=5; //longitud de la serpiente
+        fps=15;
+        tAnterior=0;
         window.onload = function(){
             fondo=window.canv;
             ctx=fondo.getContext("2d")
             document.addEventListener("keydown",teclas)
-            setInterval(jugar,1000/15); //15 veces por segundo
+            //setInterval(jugar,1000/15); //15 veces por segundo
+            requestAnimationFrame(ctrJuego);
         }
         function teclas(tecla){
             switch(tecla.keyCode){
@@ -34,6 +37,14 @@
                 case 40: //abajo
                     velX=0;velY=1; break;
             }
+        }
+        function ctrJuego(timestamp){
+            var delta=timestamp - tAnterior;
+            if (delta>=1000/fps){
+                jugar();
+                tAnterior=timestamp;
+            }
+            requestAnimationFrame(ctrJuego);
         }
         function jugar(){
             ctx.fillStyle="black"; //pinta el fondo
@@ -52,7 +63,6 @@
             serp.push({x:posX, y:posY}) //añade el nuevo segmento
             while (serp.length>longS) //quita el último segmento
                 serp.shift();
-//            ctx.fillRect(posX*tamCel,posY*tamCel,tamCel-2,tamCel-2);
             ctx.fillStyle="red";
             ctx.fillRect(xPre*tamCel,yPre*tamCel,tamCel-2,tamCel-2);
             if (xPre==posX && yPre==posY){ //Si la serpiente está en el premio

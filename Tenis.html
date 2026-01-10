@@ -8,6 +8,9 @@
 <body>
     <canvas id="fondo" width="800" height="600"></canvas>
     <script>
+        var fps = 30;
+        var tAnterior = 0;
+
         var bolaX = 50;
         var bolaY = 20;
         var velX = 10;
@@ -21,7 +24,8 @@
         window.onload = function () {
             fondo = document.getElementById("fondo");
             ctx = fondo.getContext("2d");
-            setInterval(juego, 1000 / 30);
+            //setInterval(juego, 1000 / 30);
+            requestAnimationFrame(ctrJuego);
             //fondo.addEventListener('mousedown', clickRaton)
             fondo.addEventListener('mousemove',
                 function (evt) {
@@ -31,6 +35,16 @@
                 })
 
         }
+
+        function ctrJuego(timestamp) {
+            var delta = timestamp - tAnterior;
+            if (delta >= 1000 / fps) {
+                juego();
+                tAnterior = timestamp;
+            }
+            requestAnimationFrame(ctrJuego);
+        }
+
         function juego() {
             mover();
             mostrar();

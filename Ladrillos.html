@@ -13,10 +13,12 @@
 
         fondo = window.canv;
         ctx = fondo.getContext("2d");
+        fps = 30;
+        tAnterior = 0;
 
         bolaX = bolaY = 400;
-        velX = 1;
-        velY = 3;
+        velX = 9;
+        velY = 15;
 
         ANCHO_PALA = 100;
         ALTO_PALA = 10;
@@ -28,29 +30,39 @@
         FILS_LADR = 3;
 
         ladrillos = [];
-//Cuadricula todo en ladrillos, pero solo hace visible los deseados
-        for (i = 0; i < fondo.width/ANCHO_LADR; i++) {
-            ladrillos[i]=[];
-            for (j = 0; j < fondo.height/ALTO_LADR; j++) {
-                if(i<COLS_LADR && j < FILS_LADR)
+        //Cuadricula todo en ladrillos, pero solo hace visible los deseados
+        for (i = 0; i < fondo.width / ANCHO_LADR; i++) {
+            ladrillos[i] = [];
+            for (j = 0; j < fondo.height / ALTO_LADR; j++) {
+                if (i < COLS_LADR && j < FILS_LADR)
                     ladrillos[i][j] = { x: i * ANCHO_LADR, y: j * ALTO_LADR, visible: true }
                 else
                     ladrillos[i][j] = { x: i * ANCHO_LADR, y: j * ALTO_LADR, visible: false }
             }
         }
-        setInterval(juego, 100 / 30);
+        //setInterval(juego, 100 / 30);
+        requestAnimationFrame(ctrJuego);
         fondo.addEventListener("mousemove", moverPala);
-        teclaDer=teclaIzq=false
-        document.addEventListener("keydown",pulsa);
-        document.addEventListener("keyup",suelta);
+        teclaDer = teclaIzq = false
+        document.addEventListener("keydown", pulsa);
+        document.addEventListener("keyup", suelta);
 
-        function pulsa(tecla){
-            if (tecla.keyCode==37) teclaIzq=true;
-            if (tecla.keyCode==39) teclaDer=true;
+        function ctrJuego(timestamp) {
+            var delta = timestamp - tAnterior;
+            if (delta >= 1000 / fps) {
+                juego();
+                tAnterior = timestamp;
+            }
+            requestAnimationFrame(ctrJuego);
         }
-        function suelta(tecla){
-            if (tecla.keyCode==37) teclaIzq=false;
-            if (tecla.keyCode==39) teclaDer=false;
+
+        function pulsa(tecla) {
+            if (tecla.keyCode == 37) teclaIzq = true;
+            if (tecla.keyCode == 39) teclaDer = true;
+        }
+        function suelta(tecla) {
+            if (tecla.keyCode == 37) teclaIzq = false;
+            if (tecla.keyCode == 39) teclaDer = false;
         }
 
 
@@ -72,21 +84,21 @@
             //rebote de la bola con la pala
             if (bolaY > fondo.height - ALTO_PALA &&
                 bolaX > palaX &&
-                bolaX < palaX + ANCHO_PALA){
-                    velY *= -1;
-                    //modifica la velocidad X dependiendo de la distacia al centro de la pala
-                    centro=palaX+(ANCHO_PALA/2);
-                    distAlCentro=bolaX-centro;
-                    velX = distAlCentro * 0.05;
-                }
+                bolaX < palaX + ANCHO_PALA) {
+                velY *= -1;
+                //modifica la velocidad X dependiendo de la distacia al centro de la pala
+                centro = palaX + (ANCHO_PALA / 2);
+                distAlCentro = bolaX - centro;
+                velX = distAlCentro * 0.5;
+            }
             //rebote de la bola con ladrillos
-            if (bolaX<fondo.width&&bolaX>0&&bolaY<fondo.height&&bolaY>0){
-                indXlad=Math.floor(bolaX/ANCHO_LADR);
-                indYlad=Math.floor(bolaY/ALTO_LADR);
-                if (ladrillos[indXlad][indYlad].visible){
-                    ladrillos[indXlad][indYlad].visible=false
-                    velY*=-1;
-                    }
+            if (bolaX < fondo.width && bolaX > 0 && bolaY < fondo.height && bolaY > 0) {
+                indXlad = Math.floor(bolaX / ANCHO_LADR);
+                indYlad = Math.floor(bolaY / ALTO_LADR);
+                if (ladrillos[indXlad][indYlad].visible) {
+                    ladrillos[indXlad][indYlad].visible = false
+                    velY *= -1;
+                }
             }
         }
         function pintar() {
@@ -94,8 +106,8 @@
             ctx.fillRect(0, 0, fondo.width, fondo.height);
 
             ctx.fillStyle = "lime";//pinta la pala
-            if (teclaDer) palaX=Math.min(fondo.width-ANCHO_PALA,palaX+5);
-            if (teclaIzq) palaX= Math.max(0,palaX-5);
+            if (teclaDer) palaX = Math.min(fondo.width - ANCHO_PALA, palaX + 5);
+            if (teclaIzq) palaX = Math.max(0, palaX - 5);
             ctx.fillRect(palaX, fondo.height - ALTO_PALA, ANCHO_PALA, ALTO_PALA);
 
             ctx.fillStyle = "red"//pinta la bola
@@ -104,13 +116,14 @@
             ctx.fill();
 
             ctx.fillStyle = "blue";//pinta los ladrillos
-            for (filLad of ladrillos){
-                for (lad of filLad){
+            for (filLad of ladrillos) {
+                for (lad of filLad) {
                     if (lad.visible)
-                        ctx.fillRect(lad.x,lad.y, ANCHO_LADR - 2, ALTO_LADR - 2);
+                        ctx.fillRect(lad.x, lad.y, ANCHO_LADR - 2, ALTO_LADR - 2);
                 }
             }
         }
     </script>
 </body>
+
 </html>

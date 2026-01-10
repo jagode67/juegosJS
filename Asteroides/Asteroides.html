@@ -11,6 +11,9 @@
     <canvas id="fondo" width="600" height="600"></canvas>
     <script>
         let intervaloJuego;
+        var fps = 60;
+        var tAnterior = 0;
+        var juegoActivo = true;
 
         window.onload = function () {
             canvas = document.getElementById("fondo");
@@ -22,7 +25,18 @@
             ctlDisparo = new CtlDisparo(ctx);
             ctlAsteroide = new CtlAsteroide(ctx);
 
-            intervaloJuego = setInterval(juego, 1000 / 60);
+            //intervaloJuego = setInterval(juego, 1000 / 60);
+            requestAnimationFrame(ctrJuego);
+        }
+        function ctrJuego(timestamp) {
+            var delta = timestamp - tAnterior;
+            if (delta >= 1000 / fps) {
+                juego();
+                tAnterior = timestamp;
+            }
+            if (juegoActivo) {
+                requestAnimationFrame(ctrJuego);
+            }
         }
         function juego() {
             ctx.drawImage(imgFondo, 0, 0, canvas.width, canvas.height);
@@ -36,14 +50,14 @@
             //Destrucción de asteroides por disparo
             for (ast of ctlAsteroide.asteroides)
                 for (dis of ctlDisparo.disparos)
-                        if (dis.x + dis.width > ast.x && dis.x < ast.x + ast.width &&
-                            dis.y + dis.height > ast.y && dis.y < ast.y + ast.height) {
-                            ctlAsteroide.asteroides.splice(ctlAsteroide.asteroides.indexOf(ast), 1);
-                            ctlDisparo.disparos.splice(ctlDisparo.disparos.indexOf(dis), 1);
-                            this.sonido = new Audio("sounds/destroy.wav");
-                            this.sonido.currentTime = 0;
-                            this.sonido.play();
-                        }
+                    if (dis.x + dis.width > ast.x && dis.x < ast.x + ast.width &&
+                        dis.y + dis.height > ast.y && dis.y < ast.y + ast.height) {
+                        ctlAsteroide.asteroides.splice(ctlAsteroide.asteroides.indexOf(ast), 1);
+                        ctlDisparo.disparos.splice(ctlDisparo.disparos.indexOf(dis), 1);
+                        this.sonido = new Audio("sounds/destroy.wav");
+                        this.sonido.currentTime = 0;
+                        this.sonido.play();
+                    }
             //Choche entre asteroides
             for (ene of ctlAsteroide.asteroides)
                 for (ene1 of ctlAsteroide.asteroides)
@@ -65,19 +79,26 @@
                     this.sonido.currentTime = 0;
                     this.sonido.play();
                     nave.imagen.src = "";
+
+                    // Redibujar para mostrar la nave desaparecida
+                    ctx.drawImage(imgFondo, 0, 0, canvas.width, canvas.height);
+                    ctlDisparo.mostrar();
+                    ctlAsteroide.mostrar();
+
+                    // Parar el juego
+                    juegoActivo = false;
+                    clearInterval(ctlAsteroide.intervaloCreacion);
+
+                    // Mostrar mensaje después de 1 segundo
                     setTimeout(fin, 1000);
                 }
         }
-        function fin(){
-                    // Parar el juego
-                    clearInterval(intervaloJuego);
-                    clearInterval(ctlAsteroide.intervaloCreacion);
-                    
-                    // Mostrar FIN
-                    ctx.fillStyle = "white";
-                    ctx.font = "60px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText("FIN DE JUEGO", canvas.width/2, canvas.height/2);
+        function fin() {
+            // Mostrar FIN
+            ctx.fillStyle = "white";
+            ctx.font = "60px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("FIN DE JUEGO", canvas.width / 2, canvas.height / 2);
         }
         class Nave {
             izq = false;
